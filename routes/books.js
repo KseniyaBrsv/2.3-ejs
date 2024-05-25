@@ -1,7 +1,6 @@
 const express = require('express')
 const { v4: uuid } = require('uuid')
 const router = express.Router()
-const fileMulter = require('../middleware/file')
 class Book {
   constructor (
     title = '',
@@ -31,14 +30,35 @@ const stor = {
   ]
 }
 
+router.get('/create', (req, res) => {
+  res.render('book/create', {
+    title: 'Добавить книгу',
+    book: {}
+  })
+})
+// создать книгу
+router.post('/create',
+  (req, res) => {
+    const { book } = stor
+    const {
+      title,
+      description
+    } = req.body
+
+    const newBook = new Book(title, description)
+
+    book.push(newBook)
+
+    res.redirect('/api/books')
+  })
+
 // получить все книги
 router.get('/', (req, res) => {
   const { book } = stor
-  res.render('todo/index', {
+  res.render('book/index', {
     title: 'Просмотр списка книг',
-    todos: book
+    books: book
   })
-  // res.json(book)
 })
 
 // получить книгу по ID
@@ -47,42 +67,15 @@ router.get('/:id', (req, res) => {
   const { id } = req.params
   const idx = book.findIndex(el => el.id === id)
   if (idx !== -1) {
-    // res.json(book[idx])
-    res.render('todo/view', {
+    res.render('book/view', {
       title: `Информация по книге ${book[idx].title}`,
-      todo: book[idx]
+      book: book[idx]
     })
   } else {
     res.status(404)
     res.redirect('/404')
-    res.json('Code: 404')
   }
 })
-
-router.get('/create', (req, res) => {
-  console.log(req)
-  res.render('todo/create', {
-    title: 'Добавить книгу',
-    todo: {}
-  })
-})
-// создать книгу
-router.post('/create',
-  fileMulter.single('fileBook'),
-  (req, res) => {
-    const { book } = stor
-    const {
-      title,
-      description,
-    } = req.body
-
-    const newBook = new Book(title, description)
-
-    book.push(newBook)
-
-    // res.json(newBook)
-    res.redirect('/api/books')
-  })
 
 router.get('/update/:id', (req, res) => {
   const { book } = stor
@@ -94,22 +87,18 @@ router.get('/update/:id', (req, res) => {
     res.redirect('/404')
   }
 
-  // res.json(book[idx])
-  res.render('todo/update', {
+  res.render('book/update', {
     title: 'Редактирование',
-    todo: book[idx]
+    book: book[idx]
   })
 })
 router.post('/update/:id',
-  fileMulter.single('fileBook'),
   (req, res) => {
     const { book } = stor
     const {
       title,
       description
     } = req.body
-
-    console.log(req.body)
 
     const { id } = req.params
     const idx = book.findIndex(el => el.id === id)
@@ -121,48 +110,10 @@ router.post('/update/:id',
         description
       }
       res.redirect('/api/books')
-
-      // res.json(book[idx])
     } else {
       res.status(404)
       res.redirect('/404')
-      // res.json('Code: 404')
     }
   })
-// удалить книгу по ID
-router.delete('/:id', (req, res) => {
-  const { book } = stor
-  const { id } = req.params
-  const idx = book.findIndex(el => el.id === id)
-
-  if (idx !== -1) {
-    book.splice(idx, 1)
-    res.json('ok')
-  } else {
-    res.status(404)
-    res.json('Code: 404')
-  }
-})
-
-// скачиваение файла по id
-router.get('/:id/download', (req, res) => {
-  const { book } = stor
-  const { id } = req.params
-  const idx = book.findIndex(el => el.id === id)
-
-  if (idx !== -1) {
-    const bookToDownload = book[idx]
-    const file = bookToDownload.fileBook
-    if (file) {
-      res.download(file)
-    } else {
-      res.status(404)
-      res.json('File not found')
-    }
-  } else {
-    res.status(404)
-    res.json('Code: 404')
-  }
-})
 
 module.exports = router

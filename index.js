@@ -11,7 +11,7 @@ app.set('view engine', 'ejs')
 app.use(logger)
 
 // авторизация пользователя
-app.use('/api/user', userRouter)
+app.use('/', userRouter)
 // книги
 app.use('/api/books', booksRouter)
 
